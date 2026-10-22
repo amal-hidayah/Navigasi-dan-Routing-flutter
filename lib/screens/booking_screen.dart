@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../models/tour_package.dart';
 import '../theme.dart';
+import '../widgets/destination_photo.dart';
 
 /// Hasil pemesanan yang dikirim balik ke halaman detail.
 ///
@@ -23,26 +24,25 @@ class BookingResult {
   /// Tanggal keberangkatan dalam format Indonesia, contoh: `12 Mei 2026`.
   String get dateLabel => _formatDate(date);
 
-  /// Total harga dalam format rupiah.
+  /// Total biaya dalam format rupiah, contoh: `Rp 2.500.000`.
   String get totalLabel => 'Rp ${_groupDigits(total.round())}';
 
-  static const List<String> _bulan = [
-    'Januari',
-    'Februari',
-    'Maret',
-    'April',
-    'Mei',
-    'Juni',
-    'Juli',
-    'Agustus',
-    'September',
-    'Oktober',
-    'November',
-    'Desember',
-  ];
-
-  static String _formatDate(DateTime value) {
-    return '${value.day} ${_bulan[value.month - 1]} ${value.year}';
+  static String _formatDate(DateTime d) {
+    const months = [
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember',
+    ];
+    return '${d.day} ${months[d.month - 1]} ${d.year}';
   }
 
   static String _groupDigits(int value) {
@@ -58,14 +58,15 @@ class BookingResult {
   }
 }
 
-/// Form pemesanan paket wisata.
+/// Form pemesanan dengan validasi, pemilih tanggal, dan konfirmasi saat keluar.
 ///
-/// Memakai `PopScope` supaya pengguna mengonfirmasi dulu sebelum meninggalkan
-/// form, dan mengembalikan [BookingResult] ke pemanggil lewat `Navigator.pop`.
+/// Memanfaatkan [PopScope] agar pengguna tidak sengaja kehilangan data saat
+/// menekan tombol back di perangkat Android atau gesture back.
 class BookingScreen extends StatefulWidget {
   const BookingScreen({super.key, this.package});
 
-  /// Paket yang dipesan. Null berarti pengguna masuk tanpa memilih paket.
+  /// Paket yang sedang dipesan. Bisa null jika route dibuka langsung tanpa
+  /// arguments, dalam hal ini layar menampilkan pesan kosong.
   final TourPackage? package;
 
   @override
@@ -80,8 +81,10 @@ class _BookingScreenState extends State<BookingScreen> {
 
   DateTime? _departureDate;
 
-  /// Diaktifkan sesaat sebelum halaman ditutup supaya `PopScope` melepas
-  /// kendali atas proses pop.
+  /// Penanda apakah `Navigator.pop` sedang diizinkan lewat.
+  ///
+  /// Saat `false`, tombol back di perangkat Android atau AppBar akan dicegat
+  /// oleh [PopScope] lalu menampilkan dialog konfirmasi.
   bool _allowPop = false;
 
   @override
@@ -122,10 +125,13 @@ class _BookingScreenState extends State<BookingScreen> {
       child: Scaffold(
         appBar: AppBar(title: const Text('Pemesanan')),
         body: SafeArea(
+          bottom: false,
           child: _package == null
               ? _buildEmptyState(context)
               : _buildForm(context),
         ),
+        bottomNavigationBar:
+            _package == null ? null : _buildBottomBar(context),
       ),
     );
   }
@@ -165,24 +171,23 @@ class _BookingScreenState extends State<BookingScreen> {
   }
 
   Widget _buildForm(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
       child: Form(
         key: _formKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('PAKET YANG DIPESAN', style: textTheme.labelMedium),
-            const SizedBox(height: 6),
-            Text(_package!.title, style: textTheme.titleLarge),
-            const SizedBox(height: 24),
+            _buildPackageHeader(context),
+            const SizedBox(height: 22),
             TextFormField(
               controller: _nameController,
               textCapitalization: TextCapitalization.words,
               textInputAction: TextInputAction.next,
-              decoration: const InputDecoration(labelText: 'Nama lengkap'),
+              decoration: const InputDecoration(
+                labelText: 'Nama lengkap',
+                prefixIcon: Icon(Icons.person_outline),
+              ),
               validator: (value) {
                 final name = value?.trim() ?? '';
                 if (name.isEmpty) {
@@ -199,7 +204,11 @@ class _BookingScreenState extends State<BookingScreen> {
               controller: _participantsController,
               keyboardType: TextInputType.number,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              decoration: const InputDecoration(labelText: 'Jumlah peserta'),
+              decoration: const InputDecoration(
+                labelText: 'Jumlah peserta',
+                prefixIcon: Icon(Icons.group_outlined),
+                suffixText: 'orang',
+              ),
               validator: (value) {
                 final count = int.tryParse(value?.trim() ?? '');
                 if (count == null) {
@@ -218,58 +227,159 @@ class _BookingScreenState extends State<BookingScreen> {
               onTap: _pickDate,
               decoration: const InputDecoration(
                 labelText: 'Tanggal keberangkatan',
-                suffixIcon: Icon(Icons.calendar_today_outlined),
+                prefixIcon: Icon(Icons.calendar_today_outlined),
               ),
               validator: (value) => _departureDate == null
                   ? 'Pilih tanggal keberangkatan'
                   : null,
             ),
-            const SizedBox(height: 26),
+            const SizedBox(height: 24),
             _buildSummary(),
-            const SizedBox(height: 26),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: _submit,
-                child: const Text('Konfirmasi pemesanan'),
-              ),
-            ),
           ],
         ),
       ),
     );
   }
 
+  Widget _buildPackageHeader(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final package = _package!;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(NusaTheme.radiusKartu),
+        border: Border.all(color: NusaTheme.garis),
+      ),
+      child: Row(
+        children: [
+          DestinationPhoto(
+            imageUrl: package.imageUrl,
+            label: package.title,
+            width: 74,
+            height: 74,
+            borderRadius: BorderRadius.circular(NusaTheme.radiusKecil),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'PAKET YANG DIPESAN',
+                  style: textTheme.labelSmall?.copyWith(
+                    color: NusaTheme.sunsetTua,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  package.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    height: 1.25,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${package.priceLabel} / peserta',
+                  style: textTheme.bodySmall?.copyWith(
+                    color: NusaTheme.inkMuted,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSummary() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            _SummaryRow(
-              label: 'Harga per peserta',
-              value: _package!.priceLabel,
-            ),
-            const SizedBox(height: 10),
-            _SummaryRow(
-              label: 'Jumlah peserta',
-              value: '$_participants',
-            ),
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 14),
-              child: Divider(),
-            ),
-            _SummaryRow(
-              label: 'Total',
-              value: BookingResult(
-                name: '',
-                participants: _participants,
-                date: _departureDate ?? DateTime.now(),
-                total: _total,
-              ).totalLabel,
-              emphasize: true,
-            ),
-          ],
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(NusaTheme.radiusKartu),
+        border: Border.all(color: NusaTheme.garis),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.receipt_long_outlined,
+                size: 20,
+                color: NusaTheme.lautDalam,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Rincian Pemesanan',
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: NusaTheme.lautDalam,
+                    ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          _SummaryRow(
+            label: 'Harga per peserta',
+            value: _package!.priceLabel,
+          ),
+          const SizedBox(height: 10),
+          _SummaryRow(
+            label: 'Jumlah peserta',
+            value: '$_participants',
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 12),
+            child: Divider(color: NusaTheme.garis),
+          ),
+          _SummaryRow(
+            label: 'Total',
+            value: BookingResult(
+              name: '',
+              participants: _participants,
+              date: _departureDate ?? DateTime.now(),
+              total: _total,
+            ).totalLabel,
+            emphasize: true,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomBar(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: NusaTheme.pasirHangat,
+        border: Border(top: BorderSide(color: NusaTheme.garis)),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x0A000000),
+            offset: Offset(0, -2),
+            blurRadius: 6,
+          ),
+        ],
+      ),
+      child: SafeArea(
+        minimum: const EdgeInsets.fromLTRB(20, 12, 20, 14),
+        child: SizedBox(
+          width: double.infinity,
+          height: NusaTheme.tinggiTombol,
+          child: FilledButton.icon(
+            onPressed: _submit,
+            icon: const Icon(Icons.check_circle_outline, size: 20),
+            label: const Text('Konfirmasi pemesanan'),
+          ),
         ),
       ),
     );
