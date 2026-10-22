@@ -9,29 +9,67 @@ import 'booking_screen.dart';
 ///
 /// Halaman ini menerima [TourPackage] lewat `arguments` route, jadi datanya
 /// selalu berasal dari kartu yang diklik pengguna di halaman daftar.
-class DetailScreen extends StatelessWidget {
+class DetailScreen extends StatefulWidget {
   const DetailScreen({super.key, required this.package});
 
   final TourPackage package;
 
   @override
+  State<DetailScreen> createState() => _DetailScreenState();
+}
+
+class _DetailScreenState extends State<DetailScreen> {
+  final _scrollController = ScrollController();
+
+  /// Judul di AppBar baru muncul setelah foto tertutup, supaya judul tidak
+  /// tampil dua kali di layar yang sama.
+  bool _showTitleInBar = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) {
+      return;
+    }
+    final collapsed = _scrollController.offset > 220;
+    if (collapsed != _showTitleInBar) {
+      setState(() => _showTitleInBar = collapsed);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final package = widget.package;
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
       body: CustomScrollView(
+        controller: _scrollController,
         slivers: [
           SliverAppBar(
             expandedHeight: 280,
             pinned: true,
             backgroundColor: NusaTheme.lautDalam,
             foregroundColor: Colors.white,
-            title: Text(
-              package.title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: textTheme.titleMedium?.copyWith(color: Colors.white),
-            ),
+            title: _showTitleInBar
+                ? Text(
+                    package.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: textTheme.titleMedium?.copyWith(color: Colors.white),
+                  )
+                : null,
             flexibleSpace: FlexibleSpaceBar(
               background: Stack(
                 fit: StackFit.expand,
@@ -120,7 +158,7 @@ class DetailScreen extends StatelessWidget {
     final result = await Navigator.push<BookingResult>(
       context,
       MaterialPageRoute(
-        builder: (context) => BookingScreen(package: package),
+        builder: (context) => BookingScreen(package: widget.package),
       ),
     );
 
@@ -131,7 +169,7 @@ class DetailScreen extends StatelessWidget {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          'Pemesanan ${package.title} berhasil. ${result.name}, '
+          'Pemesanan ${widget.package.title} berhasil. ${result.name}, '
           '${result.participants} peserta, berangkat ${result.dateLabel}.',
         ),
       ),
