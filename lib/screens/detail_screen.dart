@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/tour_package.dart';
 import '../theme.dart';
 import '../widgets/destination_photo.dart';
+import 'booking_screen.dart';
 
 /// Detail satu paket wisata.
 ///
@@ -94,6 +95,26 @@ class DetailScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          color: NusaTheme.pasirHangat,
+          border: Border(top: BorderSide(color: NusaTheme.garis)),
+        ),
+        child: SafeArea(
+          minimum: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+          child: FilledButton(
+            onPressed: () {
+              Navigator.push<BookingResult>(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => BookingScreen(package: package),
+                ),
+              );
+            },
+            child: const Text('Pesan Sekarang'),
+          ),
+        ),
       ),
     );
   }

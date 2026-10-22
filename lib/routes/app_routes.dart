@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/tour_package.dart';
+import '../screens/booking_screen.dart';
 import '../screens/detail_screen.dart';
 import '../screens/not_found_screen.dart';
 
@@ -45,6 +46,15 @@ Route<dynamic> generateRoute(RouteSettings settings) {
       // Argumen kosong atau salah tipe berarti halaman tidak bisa ditampilkan.
       return MaterialPageRoute<void>(
         builder: (context) => const NotFoundScreen(),
+        settings: settings,
+      );
+    case AppRoutes.booking:
+      // Paket boleh kosong, layar booking akan menampilkan kondisi kosong.
+      final package = settings.arguments;
+      return MaterialPageRoute<void>(
+        builder: (context) => BookingScreen(
+          package: package is TourPackage ? package : null,
+        ),
         settings: settings,
       );
     default:
