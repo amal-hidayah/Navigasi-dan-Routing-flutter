@@ -104,16 +104,35 @@ class DetailScreen extends StatelessWidget {
         child: SafeArea(
           minimum: const EdgeInsets.fromLTRB(20, 12, 20, 12),
           child: FilledButton(
-            onPressed: () {
-              Navigator.push<BookingResult>(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => BookingScreen(package: package),
-                ),
-              );
-            },
+            onPressed: () => _startBooking(context),
             child: const Text('Pesan Sekarang'),
           ),
+        ),
+      ),
+    );
+  }
+
+  /// Membuka form pemesanan dan menampilkan hasilnya sebagai SnackBar.
+  ///
+  /// `Navigator.push` dipakai langsung, bukan route bernama, karena form
+  /// pemesanan mengembalikan objek hasil lewat `Navigator.pop`.
+  Future<void> _startBooking(BuildContext context) async {
+    final result = await Navigator.push<BookingResult>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => BookingScreen(package: package),
+      ),
+    );
+
+    if (result == null || !context.mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Pemesanan ${package.title} berhasil. ${result.name}, '
+          '${result.participants} peserta, berangkat ${result.dateLabel}.',
         ),
       ),
     );
