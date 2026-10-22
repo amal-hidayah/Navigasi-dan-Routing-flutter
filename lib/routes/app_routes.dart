@@ -32,7 +32,7 @@ class AppRoutes {
 ///
 /// Dipakai `MaterialApp.onGenerateRoute`. Nama route yang tidak dikenal akan
 /// diarahkan ke halaman 404.
-Route<dynamic> generateRoute(RouteSettings settings) {
+Route<dynamic>? generateRoute(RouteSettings settings) {
   switch (settings.name) {
     case AppRoutes.detail:
       // Paket dikirim lewat `arguments` saat halaman detail dipanggil.
@@ -58,9 +58,8 @@ Route<dynamic> generateRoute(RouteSettings settings) {
         settings: settings,
       );
     default:
-      return MaterialPageRoute<void>(
-        builder: (context) => const NotFoundScreen(),
-        settings: settings,
-      );
+      // Nama route lain tidak dikenal, ditangani `onUnknownRoute` di
+      // `MaterialApp`.
+      return null;
   }
 }
