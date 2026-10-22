@@ -105,7 +105,7 @@ class _PackageCard extends StatelessWidget {
             DestinationPhoto(
               imageUrl: package.imageUrl,
               label: package.title,
-              height: 190,
+              height: 180,
               borderRadius: BorderRadius.zero,
             ),
             Padding(

@@ -37,6 +37,7 @@ class DestinationPhoto extends StatelessWidget {
         child: Image.network(
           imageUrl,
           fit: BoxFit.cover,
+          alignment: Alignment.center,
           semanticLabel: label,
           loadingBuilder: (context, child, progress) {
             if (progress == null) {
@@ -45,11 +46,11 @@ class DestinationPhoto extends StatelessWidget {
             return const _PhotoPlaceholder(
               message: 'Memuat foto',
               child: SizedBox(
-                height: 22,
-                width: 22,
+                height: 20,
+                width: 20,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: NusaTheme.inkMuted,
+                  color: NusaTheme.lautDalam,
                 ),
               ),
             );
@@ -59,7 +60,7 @@ class DestinationPhoto extends StatelessWidget {
               message: 'Foto tidak dapat dimuat',
               child: Icon(
                 Icons.landscape_outlined,
-                size: 28,
+                size: 26,
                 color: NusaTheme.inkMuted,
               ),
             );
@@ -70,7 +71,7 @@ class DestinationPhoto extends StatelessWidget {
   }
 }
 
-/// Cadangan datar saat foto belum siap atau gagal dimuat.
+/// Cadangan visual rapi saat foto belum siap atau gagal dimuat.
 class _PhotoPlaceholder extends StatelessWidget {
   const _PhotoPlaceholder({required this.message, required this.child});
 
@@ -79,20 +80,46 @@ class _PhotoPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ColoredBox(
+    return Container(
       color: NusaTheme.fotoCadangan,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          Center(child: child),
-          Align(
-            alignment: Alignment.bottomLeft,
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Text(message, style: Theme.of(context).textTheme.bodySmall),
+      alignment: Alignment.center,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxHeight < 110) {
+            return Center(child: child);
+          }
+
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.75),
+                    shape: BoxShape.circle,
+                  ),
+                  child: child,
+                ),
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Text(
+                    message,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: NusaTheme.inkMuted,
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
