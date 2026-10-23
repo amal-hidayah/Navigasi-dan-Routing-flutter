@@ -10,15 +10,10 @@ Aplikasi ini diuji dan dijalankan langsung pada perangkat fisik Android (**Xiaom
 
 Berikut adalah dokumentasi tampilan antarmuka dan alur fitur aplikasi yang diambil langsung dari perangkat HP Android yang terhubung melalui USB:
 
-| 1. Splash Screen | 2. Katalog Paket Wisata | 3. Detail Paket Wisata |
-| :---: | :---: | :---: |
-| <img src="screenshots/01_splash_screen.png" width="250" alt="Splash Screen" /> | <img src="screenshots/02_daftar_paket.png" width="250" alt="Katalog Paket" /> | <img src="screenshots/03_detail_paket.png" width="250" alt="Detail Paket" /> |
-| Halaman pembuka dengan latar hero dan transisi `pushReplacementNamed` | Katalog destinasi dengan foto beradaptasi, tarif per orang, dan aksi lihat detail | Halaman rincian paket wisata dengan `SliverAppBar` interaktif dan tombol aksi pesan |
-
-| 4. Form Pemesanan | 5. Proteksi Back (PopScope) | 6. Konfirmasi Berhasil (SnackBar) |
-| :---: | :---: | :---: |
-| <img src="screenshots/04_form_pemesanan.png" width="250" alt="Form Pemesanan" /> | <img src="screenshots/05_dialog_konfirmasi_keluar.png" width="250" alt="Dialog PopScope" /> | <img src="screenshots/07_snackbar_berhasil.png" width="250" alt="SnackBar Berhasil" /> |
-| Form pemesanan lengkap dengan kartu preview paket, input berikon, dan *sticky button* | Pencegahan kehilangan data form saat menekan tombol *back* Android lewat `PopScope` | SnackBar konfirmasi pada halaman detail setelah data hasil dikembalikan lewat `Navigator.pop` |
+| 1. Splash Screen | 2. Katalog Paket Wisata | 3. Detail Paket Wisata | 4. Form Pemesanan |
+| :---: | :---: | :---: | :---: |
+| <img src="screenshots/01_splash_screen.png" width="230" alt="Splash Screen" /> | <img src="screenshots/02_daftar_paket.png" width="230" alt="Katalog Paket" /> | <img src="screenshots/03_detail_paket.png" width="230" alt="Detail Paket" /> | <img src="screenshots/04_form_pemesanan.png" width="230" alt="Form Pemesanan" /> |
+| Halaman pembuka dengan latar hero dan transisi `pushReplacementNamed` | Katalog destinasi dengan foto beradaptasi, tarif per orang, dan aksi lihat detail | Halaman rincian paket wisata dengan `SliverAppBar` interaktif dan tombol aksi pesan | Form pemesanan lengkap dengan kartu preview paket, input berikon, dan *sticky button* |
 
 ---
 
